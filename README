@@ -1,0 +1,67 @@
+# README
+
+## Project Title: Dataplane Router
+
+### Author: VASILICĂ Andrei
+
+### Overview
+
+This project involves implementing a basic router that handles IPv4 packets and ARP requests/responses. The router processes incoming packets, determines the best routing path, and forwards the packets accordingly. It also handles ARP requests to map IP addresses to MAC addresses and generates ICMP messages for specific network events.
+
+### Key Components
+
+1. **IPv4 Protocol Implementation**
+2. **ARP Protocol Implementation**
+3. **Packet Routing Process**
+4. **ICMP Protocol Implementation**
+
+### 1. IPv4 Protocol Implementation
+
+The router extracts the Ethernet header to identify the packet type. If the packet is identified as IPv4 (indicated by `ETHERTYPE_IP`), the following steps are performed:
+- **Checksum Validation**: Validates the IP header checksum to ensure packet integrity.
+- **TTL Check**: Checks the Time-to-Live (TTL) value of the packet. If the TTL is 1 or less, an ICMP "Time Exceeded" message is generated and sent back to the source.
+- **Best Route Determination**: Uses the `get_best_route` function to determine the optimal routing path for the IP packet. This function employs a binary search on the routing table sorted by prefix and mask.
+- **Packet Forwarding**: Decrements the TTL, recalculates the checksum, and forwards the packet to the next interface as specified by the routing table.
+
+### 2. ARP Protocol Implementation
+
+The router manages ARP requests and responses to map IP addresses to MAC addresses:
+- **ARP Request Handling**: When a packet needs to be forwarded, but there is no corresponding IP-MAC entry in the ARP table, an ARP request is broadcasted on the network.
+- **ARP Response Handling**: Upon receiving an ARP request, the router checks if the requested IP matches any of its interfaces. If so, it sends an ARP reply with the interface's MAC address.
+
+### 3. Packet Routing Process
+
+The routing table is read and sorted using the `qsort` function with a custom comparator (`comp`). The comparator sorts entries based on network prefix and mask to ensure that the most specific route is selected for a given IP address. The `get_best_route` function uses binary search to efficiently find the best match in the sorted routing table.
+
+### 4. ICMP Protocol Implementation
+
+The router generates ICMP messages in response to various network events, such as TTL expiration or receiving an echo request:
+- **ICMP Message Generation**: The `send_icmp_request` function constructs and sends ICMP responses, filling in the necessary ICMP type and code, and recalculating the checksum to maintain packet integrity.
+
+### Code Structure
+
+The code includes the following major components:
+- **Initialization and Setup**: Allocates memory for the routing table and ARP table, reads the routing table from a file, and initializes network interfaces.
+- **Packet Reception and Processing**: Continuously receives packets, identifies their types, and processes them accordingly (IPv4, ARP).
+- **Routing and Forwarding Logic**: Determines the best route for each packet, handles TTL decrements, and forwards the packet.
+- **ARP Table Management**: Handles ARP requests and responses, updates the ARP table, and processes queued packets once the ARP entry is available.
+
+### Usage
+
+To compile and run the router:
+1. Ensure the necessary libraries and headers are included.
+2. Compile the code using a suitable compiler (e.g., `gcc`).
+3. Run the executable with the routing table file and interface arguments:
+   ```sh
+   ./router routing_table.txt iface1 iface2 ...
+   ```
+
+### Files
+
+- `main.c`: Contains the main logic for the router.
+- `include/lib.h`, `include/protocols.h`, `include/queue.h`: Header files containing necessary definitions and function declarations.
+- `Makefile`: To compile the project.
+
+### Conclusion
+
+This project demonstrates the implementation of a basic router capable of handling IPv4 packets, ARP requests/responses, and generating ICMP messages. The code is structured to ensure efficient packet processing and routing, adhering to standard networking protocols.
